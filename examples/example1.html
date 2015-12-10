@@ -42,6 +42,7 @@
 				scene = new THREE.Scene();
 
 				var texture = THREE.ImageUtils.loadTexture( 'textures/crate.jpg' );
+				var textureSp = THREE.ImageUtils.loadTexture( 'textures/crate-specular.jpg' );
 
 				var geometry = new THREE.BoxGeometry( 200, 200, 200 );
 				
@@ -55,13 +56,15 @@
 
 
 				var material = new THREE.MeshPhongMaterial({
-					map: texture, shininess: 100
+					map: texture,
+					specularMap: textureSp,
+					shininess: 10000
 				});
 
 				mesh = new THREE.Mesh( geometry, material );
 				scene.add( mesh );
 
-				var light = new THREE.PointLight(0xffaf6f, 200000, 800);
+				var light = new THREE.PointLight(0xffaf6f, 100000, 800);
 				light.position.set(100, 100, 300);
 				scene.add(light);
 
@@ -102,8 +105,8 @@
 
 				requestAnimationFrame( animate );
 
-				mesh.rotation.x += 0.04;
-				mesh.rotation.y += 0.02;
+				mesh.rotation.x += 0.008;
+				mesh.rotation.y += 0.004;
 
 				renderer.render( scene, camera );
 
