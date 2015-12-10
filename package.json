@@ -8,11 +8,13 @@
     "three": "^0.73.0"
   },
   "devDependencies": {
-    "browserify": "^12.0.1"
+    "browserify": "^12.0.1",
+    "uglify-js": "^2.6.1"
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "browserify -r three -r hyper3d -o examples/js/bundle.js"
+    "build": "browserify -r three -r hyper3d | uglifyjs --compress --mangle > examples/js/bundle.js",
+    "build-debug": "browserify -r three -r hyper3d -d -o examples/js/bundle.js"
   },
   "keywords": [
     "WebGL"
