@@ -1,0 +1,22 @@
+{
+  "name": "hyper3d-examples",
+  "version": "0.0.0",
+  "description": "HYPER3D Examples",
+  "main": "index.js",
+  "dependencies": {
+    "hyper3d": "^0.0.0",
+    "three": "^0.73.0"
+  },
+  "devDependencies": {
+    "browserify": "^12.0.1"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "browserify -r three -r hyper3d -o examples/js/bundle.js"
+  },
+  "keywords": [
+    "WebGL"
+  ],
+  "author": "yvt <i@yvt.jp>",
+  "license": "MIT"
+}
