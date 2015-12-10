@@ -13,7 +13,7 @@
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "cat src/bundle-header.js > examples/js/bundle.js && browserify -r three -r hyper3d | uglifyjs --compress --mangle >> examples/js/bundle.js",
+    "build": "cat src/bundle-header.js > examples/js/bundle.js && browserify -r three -r hyper3d | uglifyjs --compress --mangle --screw-ie8 >> examples/js/bundle.js",
     "build-debug": "browserify -r three -r hyper3d -d -o bundle-raw.js && cat src/bundle-header.js bundle-raw.js > examples/js/bundle.js"
   },
   "keywords": [
