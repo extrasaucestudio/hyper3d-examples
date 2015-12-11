@@ -11,11 +11,49 @@ function runExample(options, cb)
         cb = options;
         options = {};
     }
-        
-    var renderer = new Hyper.WebGLHyperRenderer({
-        useFullResolutionGBuffer: true,
-        useFPBuffer: true
-    });
+
+    if (options.pixelRatio == null) {
+        options.pixelRatio = window.devicePixelRatio;
+    }
+    
+    var queries = window.location.search.substr(1).split('&');
+    for (var i = 0; i < queries.length; ++i) {
+        var query = queries[i];
+        var k = query.indexOf('=');
+        if (k >= 0) {
+            var key = unescape(query.substr(0, k));
+            var value = unescape(query.substr(k + 1));
+            if (key === 'by')
+                options.renderer = value;
+            else if (key === 'ratio') {
+                value = parseFloat(value);
+                if (value >= 0.1 && value <= 4)
+                    options.pixelRatio = value;
+            }
+        }
+    }
+
+    var renderer;
+    switch (options.renderer) {
+        case null:
+        case undefined:
+        case 'hyper3d':
+            renderer = new Hyper.WebGLHyperRenderer({
+                useFullResolutionGBuffer: true,
+                useFPBuffer: true
+            });
+            break;
+        case 'threejs':
+            renderer = new THREE.WebGLRenderer();
+            break;
+        default:
+            $('<div class="error">')
+            .text("unknown renderer specified: " + options.renderer)
+            .appendTo($('body'));
+            return;
+    }
+
+    var pixelRatio = options.pixelRatio;
 
     var stats = new Stats();
 
@@ -111,8 +149,8 @@ function runExample(options, cb)
         framework.height = $(window).height();
 
         renderer.setSize( 
-            framework.width * window.devicePixelRatio & ~1, 
-            framework.height * window.devicePixelRatio & ~1 );
+            framework.width * pixelRatio & ~1, 
+            framework.height * pixelRatio & ~1 );
 
         framework.invoke('resize');
     }
