@@ -176,8 +176,15 @@ function runExample(options, cb)
 
     }
 
+    var mouseEnabled = false;
+
     function enableMouse()
     {
+        if (mouseEnabled) {
+            return;
+        }
+        mouseEnabled = true;
+        
         var currentTouch = null;
         var lastX = 0, lastY = 0, startX = 0, startY = 0;
 
