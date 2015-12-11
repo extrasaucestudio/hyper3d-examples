@@ -4,18 +4,7 @@
 		<title>HYPER - simple</title>
 		<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
-		<style>
-			body {
-				font-family: Monospace;
-				background-color: #f0f0f0;
-				margin: 0px;
-				overflow: hidden;
-			}
-			canvas.main {
-				width: 100%;
-				height: 100%;
-			}
-		</style>
+		<link rel="stylesheet" type="text/css" href="css/style.css">
 	</head>
 	<body>
 		<!-- based on examples of three.js -->
@@ -85,9 +74,6 @@
 				document.body.appendChild( renderer.domElement );
 
 				stats = new Stats();
-				stats.domElement.style.position = 'absolute';
-				stats.domElement.style.left = '0px';
-				stats.domElement.style.top = '0px';
 				document.body.appendChild( stats.domElement );
 
 				window.addEventListener( 'resize', onWindowResize, false );
