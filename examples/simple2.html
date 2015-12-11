@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>HYPER - simple2</title>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+		<link rel="stylesheet" type="text/css" href="css/style.css">
+	</head>
+	<body>
+		<!-- 
+			Based on examples of three.js.
+			This example uses the example framework (framework.js).
+		-->
+
+		<script src="js/jquery.min.js"></script>
+		<script src="js/jquery.mousecapture.js"></script>
+		<script src="js/bundle.js"></script>
+		<script src="js/stats.min.js"></script>
+		<script src="js/framework.js"></script>
+
+		<script>
+			runExample(function (fw) {
+				var renderer = fw.renderer;
+				var camera = fw.setupCamera({
+					near: 100, far: 1200, fov: 70, distance: 400
+				});
+
+				var scene = new THREE.Scene();
+
+				var texture = THREE.ImageUtils.loadTexture( 'textures/crate.jpg' );
+				var textureSp = THREE.ImageUtils.loadTexture( 'textures/crate-specular.jpg' );
+
+				var geometry = new THREE.BoxGeometry( 200, 200, 200 );
+				
+				var skyMaterial = new THREE.MeshBasicMaterial({
+					color: 0x5f3f3f
+				});
+
+				mesh = new THREE.Mesh( geometry, skyMaterial );
+				mesh.scale.set(4, 4, -4);
+				scene.add( mesh );
+
+
+				var material = new THREE.MeshPhongMaterial({
+					map: texture,
+					specularMap: textureSp,
+					shininess: 10000
+				});
+
+				mesh = new THREE.Mesh( geometry, material );
+				scene.add( mesh );
+
+				var light = new THREE.PointLight(0xffaf6f, 100000, 800);
+				light.position.set(100, 100, 300);
+				scene.add(light);
+
+				light = new THREE.PointLight(0x6fafff, 200000, 800);
+				light.position.set(100, -400, 100);
+				scene.add(light);
+
+				light = new THREE.AmbientLight(0x5f3f3f);
+				scene.add(light);
+
+				fw.on('animate', function () {
+					mesh.rotation.x += 0.008;
+					mesh.rotation.y += 0.004;
+
+					renderer.render( scene, camera );
+				});
+
+			});
+
+		</script>
+
+	</body>
+</html>

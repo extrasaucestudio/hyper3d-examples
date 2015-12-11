@@ -7,10 +7,14 @@
 		<link rel="stylesheet" type="text/css" href="css/style.css">
 	</head>
 	<body>
-		<!-- based on examples of three.js -->
+		<!-- 
+			Based on examples of three.js.
+			This example doesn't use the example framework (framework.js) to show
+			how to demonstrate how to initialize the HYPER3D renderer.
+		-->
 
 		<script src="js/bundle.js"></script>
-		<script src="js/stats.min.js"></script>
+		<script src="js/stats.min.js"></script> 
 
 		<script>
 
@@ -42,7 +46,6 @@
 				mesh = new THREE.Mesh( geometry, skyMaterial );
 				mesh.scale.set(3, 3, -3);
 				scene.add( mesh );
-
 
 				var material = new THREE.MeshPhongMaterial({
 					map: texture,
