@@ -486,12 +486,27 @@ function runExample(options, cb)
         });
     }
 
+    function translateKey(e) {
+        var key = e.key;
+        if (key == null) {
+            switch (e.keyCode) {
+                case 16:
+                    return "Shift";
+                default:
+                    return String.fromCharCode(e.keyCode).toLowerCase();
+            }
+        }
+        return key;
+    }
+
     $('body')
     .on('keydown', function (e) {
+        e = { key: translateKey(e) };
         pressedKeys.set(e.key, true);
         framework.invoke('keydown', e);
     })
     .on('keyup', function (e) {
+        e = { key: translateKey(e) };
         pressedKeys.delete(e.key);
         framework.invoke('keyup', e);
     });
