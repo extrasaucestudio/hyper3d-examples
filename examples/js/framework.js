@@ -221,9 +221,8 @@ function runExample(options, cb)
                         p.z -= Math.cos(yaw) * Math.cos(pitch) * d;
 
                         d = e.deltaTime * speed * ddx;
-                        p.x += Math.cos(yaw) * Math.cos(pitch) * d;
-                        p.y -= Math.sin(pitch) * d;
-                        p.z += Math.sin(yaw) * Math.cos(pitch) * d;
+                        p.x += Math.cos(yaw) * d;
+                        p.z += Math.sin(yaw) * d;
                     } else if (move === 'walk') {
                         var d = e.deltaTime * speed * ddz;
                         p.x += Math.sin(yaw) * d;
