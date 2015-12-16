@@ -3,4 +3,5 @@ node_modules
 examples/js/bundle.js
 bundle-raw.js
 assets
+npm-debug.log
 
