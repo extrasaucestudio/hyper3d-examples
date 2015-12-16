@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>HYPER - game_fps</title>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+		<link rel="stylesheet" type="text/css" href="css/style.css">
+	</head>
+	<body>
+
+		<script src="js/jquery.min.js"></script>
+		<script src="js/jquery.mousecapture.js"></script>
+		<script src="js/bundle.js"></script>
+		<script src="js/stats.min.js"></script>
+		<script src="js/framework.js"></script>
+
+		<script>
+			runExample(function (fw) {
+				var renderer = fw.renderer;
+				var camera = fw.setupFirstPersonCamera({
+					near: 0.1, far: 50, fov: 70, move: null
+				});
+				camera.position.set(9.41, 1.7, -14.8263);
+				camera.up.set(0, 0, 1);
+
+				// array of Object3D which clips the movement of players
+				var playerClips;
+
+				function Player()
+				{
+					this.pos = new THREE.Vector3(9.41, 1.7, -14.8263);
+					this.vel = new THREE.Vector3(0, 0, 0);
+					this.yaw = 0;
+					this.pitch = 0;
+					this.height = 1.7;
+					this.eyeHeight = 1.6;
+				}
+				Player.prototype = {
+
+				};
+
+				var scene = new THREE.Scene();
+
+				var texture = THREE.ImageUtils.loadTexture( 'textures/crate.jpg' );
+				var textureSp = THREE.ImageUtils.loadTexture( 'textures/crate-specular.jpg' );
+
+				var skygeo = new THREE.BoxGeometry( 70, 70, 70 );
+				for (var i = 0; i < skygeo.faces.length; ++i) {
+					var face = skygeo.faces[i];
+					var k = face.a;
+					for (var j = 0; j < 3; ++j) {
+						face.vertexNormals[j].negate();
+					}
+					face.a = face.b; face.b = k;
+				}
+				for (var i = 0; i < skygeo.vertices.length; ++i) {
+					var v = skygeo.vertices[i];
+				}
+				
+				var skyMaterial = new THREE.MeshBasicMaterial({
+					color: 0x9fcfff
+				});
+
+				mesh = new THREE.Mesh( skygeo, skyMaterial );
+				camera.add( mesh );
+
+
+				var levelMesh;
+
+				var jsonLoader = new THREE.JSONLoader();
+				jsonLoader.load('models/level.json', function (geo, mats) {
+
+					var material = new THREE.MeshPhongMaterial({
+						//map: texture,
+						//specularMap: textureSp,
+						color: 0x3f3f3f,
+						shininess: 10
+					});
+
+					levelMesh = new THREE.Mesh(geo, material);
+					levelMesh.castShadow = true;
+					scene.add(levelMesh);
+				});
+
+				var light = new THREE.DirectionalLight(0xffffff, 2);
+				light.position.set(2, 5, 1);
+				light.castShadow = true;
+				scene.add(light);
+
+				light = new THREE.PointLight(0xffaf6f, 10, 10);
+				light.position.set(0, 0.1, -0.5);
+				light.castShadow = true;
+				//camera.add(light);
+
+				light = new THREE.AmbientLight(0x9fcfff);
+				scene.add(light);
+
+				scene.add(camera);
+
+				fw.on('animate', function (e) {
+
+					renderer.render( scene, camera );
+				});
+
+			});
+
+		</script>
+
+	</body>
+</html>
