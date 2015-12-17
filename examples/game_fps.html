@@ -123,8 +123,6 @@
 								var r = results[i];
 								var face = geo.faces[r.faceIndex];
 
-								console.log(r, r.pos.x, r.pos.y, r.pos.z);
-
 								// get away from the wall
 								var d = r.pos.sub(center).normalize();
 								this.pos.addScaledVector(d, -r.depth);
