@@ -85,14 +85,14 @@
 						this.pos.addScaledVector(this.vel, deltaTime);
 
 						// friction
-						this.vel.x *= Math.pow(0.001, deltaTime);
-						this.vel.z *= Math.pow(0.001, deltaTime);
+						this.vel.x *= Math.pow(0.0001, deltaTime);
+						this.vel.z *= Math.pow(0.0001, deltaTime);
 
 						// gravity
 						this.vel.y -= 20 * deltaTime;
 
-						this.vel.addScaledVector(this.getFrontNoPitch(), this.control.y * 0.6);
-						this.vel.addScaledVector(this.getSide(), this.control.x * 0.6);
+						this.vel.addScaledVector(this.getFrontNoPitch(), this.control.y * 40 * deltaTime);
+						this.vel.addScaledVector(this.getSide(), this.control.x * 40 * deltaTime);
 
 						// floor
 						var caster = new THREE.Raycaster();

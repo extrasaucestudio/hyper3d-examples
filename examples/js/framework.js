@@ -352,7 +352,7 @@ var runExample = calledChecked(function (options, cb) {
 
             var e = {
                 time: t,
-                deltaTime: dt
+                deltaTime: Math.min(dt, 0.2) // clamp
             };
             framework.invoke('preanimate', e);
             framework.invoke('animate', e);
