@@ -5,8 +5,54 @@
 var THREE = require('three');
 var Hyper = require('hyper3d');
 
-function runExample(options, cb)
-{
+var errorOccured = false;
+
+var callChecked = (function () {
+    var popup = $('<div class="error-popup">');
+    $('<h2>').text("Oops! Something went wrong...").appendTo(popup);
+    var detailBox = $('<pre>').appendTo(popup);
+    $('<p>').html('<a href="http://get.webgl.org/troubleshooting">WebGL Troubleshooting</a>' +
+        ' ― <a href="https://github.com/Hyper3D/hyper3d/issues">Hyper3D Issue Tracker</a>')
+    .appendTo(popup);
+
+    function showErrorPopup(msg)
+    {
+        detailBox.text(msg);
+        popup.appendTo('body');
+    }
+
+    return function(fn)
+    {
+        try {
+            fn.apply(null, Array.prototype.slice.call(arguments, 1));
+        } catch (e) {
+            console.error("Unexpected error!");
+            console.error(e);
+            console.log("Error guard can be disabled by specifying 'check=no'.");
+            errorOccured = true;
+
+            var msg;
+            if (e == null) {
+                msg = "(null)";
+            } else {
+                msg = String(e);
+                if (e.stack) {
+                    if (e.stack.indexOf(msg) >= 0) {
+                        msg = e.stack;
+                    } else {
+                       msg += "\n\n" + e.stack;
+                    }
+                }
+            }
+            showErrorPopup(msg);
+        }
+    }
+})();
+var calledChecked = function (fn) {
+    return callChecked.bind(null, fn);
+};
+
+var runExample = calledChecked(function (options, cb) {
     if (cb == null) {
         cb = options;
         options = {};
@@ -29,6 +75,10 @@ function runExample(options, cb)
                 value = parseFloat(value);
                 if (value >= 0.1 && value <= 4)
                     options.pixelRatio = value;
+            } else if (key === 'check') {
+                if (value === 'no') {
+                    callChecked = function (fn) { return fn(); };
+                }
             }
         }
     }
@@ -47,10 +97,7 @@ function runExample(options, cb)
             renderer = new THREE.WebGLRenderer();
             break;
         default:
-            $('<div class="error">')
-            .text("unknown renderer specified: " + options.renderer)
-            .appendTo($('body'));
-            return;
+            throw new Error("Unknown renderer was specified: '" + options.renderer + "'");
     }
 
     var pixelRatio = options.pixelRatio;
@@ -104,9 +151,11 @@ function runExample(options, cb)
             if (typeof handlers === 'function') {
                 return;
             }
-            for (var i = 0; i < handlers.length; ++i) {
-                handlers[i].apply(this, args);
-            }
+            callChecked(function () {
+                for (var i = 0; i < handlers.length; ++i) {
+                    handlers[i].apply(framework, args);
+                }
+            });
         },
         width: 0,
         height: 0,
@@ -255,14 +304,16 @@ function runExample(options, cb)
 
     function resizeRenderer()
     {
-        framework.width = $(window).width();
-        framework.height = $(window).height();
+        callChecked(function () {
+            framework.width = $(window).width();
+            framework.height = $(window).height();
 
-        renderer.setSize( 
-            framework.width * pixelRatio & ~1, 
-            framework.height * pixelRatio & ~1 );
+            renderer.setSize( 
+                framework.width * pixelRatio & ~1, 
+                framework.height * pixelRatio & ~1 );
 
-        framework.invoke('resize');
+            framework.invoke('resize');
+        });
     }
 
     resizeRenderer();
@@ -279,21 +330,27 @@ function runExample(options, cb)
 
     function animate()
     {
-        var t = getTime();
-        var dt = t - lastFrameTime;
-        lastFrameTime = t;
+        if (errorOccured) {
+            return;
+        }
 
-        requestAnimationFrame( animate );
+        callChecked(function () {
+            var t = getTime();
+            var dt = t - lastFrameTime;
+            lastFrameTime = t;
 
-        var e = {
-            time: t,
-            deltaTime: dt
-        };
-        framework.invoke('preanimate', e);
-        framework.invoke('animate', e);
-        framework.invoke('postanimate', e);
+            requestAnimationFrame( animate );
 
-        stats.update();
+            var e = {
+                time: t,
+                deltaTime: dt
+            };
+            framework.invoke('preanimate', e);
+            framework.invoke('animate', e);
+            framework.invoke('postanimate', e);
+
+            stats.update();
+        });
 
     }
 
@@ -511,4 +568,4 @@ function runExample(options, cb)
     });
 
     animate();
-}
+});
