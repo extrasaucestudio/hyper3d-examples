@@ -188,9 +188,14 @@
 					color: 0x9fcfff
 				});
 
-				mesh = new THREE.Mesh( skygeo, skyMaterial );
+				mesh = new THREE.Mesh(skygeo, skyMaterial);
 				camera.add( mesh );
 
+				var sungeo = new THREE.SphereGeometry(0.7, 16, 16);
+				var suncolor = new THREE.Color();
+				suncolor.r = 20; suncolor.g = 17; suncolor.b = 14;
+				var sun = new THREE.Mesh(sungeo, new THREE.MeshBasicMaterial({color: suncolor}));
+				scene.add(sun);
 
 				var levelMesh;
 
@@ -212,18 +217,18 @@
 					playerClipObject = levelMesh;
 				});
 
-				var light = new THREE.DirectionalLight(0xffefdf, 2);
-				light.position.set(2, 5, 1);
-				light.castShadow = true;
-				scene.add(light);
+				var sunLight = new THREE.DirectionalLight(0xffefdf, 2);
+				sunLight.position.set(2, 5, 1);
+				sunLight.castShadow = true;
+				scene.add(sunLight);
 
-				light = new THREE.PointLight(0xffaf6f, 10, 10);
-				light.position.set(0, 0.1, -0.5);
-				light.castShadow = true;
-				//camera.add(light);
+				var flashlight = new THREE.PointLight(0xffaf6f, 10, 10);
+				flashlight.position.set(0, 0.1, -0.5);
+				flashlight.castShadow = true;
+				//camera.add(flashlight);
 
-				light = new THREE.AmbientLight(0x9fcfff);
-				scene.add(light);
+				var ambLight = new THREE.AmbientLight(0x9fcfff);
+				scene.add(ambLight);
 
 				scene.add(camera);
 
@@ -253,6 +258,8 @@
 					}
 
 					human.moveCamera(camera);
+					sun.position.copy(camera.position);
+					sun.position.addScaledVector(sunLight.position, 5)
 
 					renderer.render( scene, camera );
 				});
