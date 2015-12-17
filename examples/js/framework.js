@@ -79,7 +79,11 @@ var runExample = calledChecked(function (options, cb) {
                 if (value === 'no') {
                     callChecked = function (fn) { return fn(); };
                 }
-            }
+            } else if (key === 'fps') {
+                value = parseFloat(value);
+                if (value >= 1 && value <= 1000)
+                    options.fpsLimit = value;
+            } 
         }
     }
 
@@ -335,11 +339,16 @@ var runExample = calledChecked(function (options, cb) {
         }
 
         callChecked(function () {
+            requestAnimationFrame( animate );
+
             var t = getTime();
             var dt = t - lastFrameTime;
+            if (options.fpsLimit) {
+                if (dt < 1 / options.fpsLimit) {
+                    return;
+                }
+            }
             lastFrameTime = t;
-
-            requestAnimationFrame( animate );
 
             var e = {
                 time: t,
