@@ -7,7 +7,7 @@
     "hyper3d": "^0.0.0",
     "three": "^0.73.0",
     "patroljs": "^0.1.0",
-    "threejs-box-hittest": "^0.0.0"
+    "threejs-geometry-hittest": "^0.0.3"
   },
   "devDependencies": {
     "browserify": "^12.0.1",
