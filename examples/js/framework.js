@@ -52,6 +52,13 @@ var calledChecked = function (fn) {
     return callChecked.bind(null, fn);
 };
 
+function showHyper3DLogo()
+{
+    $('<img class="logo-hyper3d">')
+    .attr('src', 'img/logo.svg')
+    .appendTo('body');
+}
+
 var runExample = calledChecked(function (options, cb) {
     if (cb == null) {
         cb = options;
@@ -96,6 +103,7 @@ var runExample = calledChecked(function (options, cb) {
                 useFullResolutionGBuffer: true,
                 useFPBuffer: true
             });
+            showHyper3DLogo();
             break;
         case 'threejs':
             renderer = new THREE.WebGLRenderer();

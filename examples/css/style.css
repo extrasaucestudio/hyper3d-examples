@@ -48,3 +48,12 @@ a {
 }
 a:hover {
 	text-decoration: underline;
+}
+
+img.logo-hyper3d {
+	position: fixed;
+	right: 20px; bottom: 20px;
+	width: 120px;
+	max-width: 40%;
+	opacity: 0.3;
+}
