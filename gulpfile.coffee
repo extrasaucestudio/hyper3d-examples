@@ -13,6 +13,7 @@ source = require('vinyl-source-stream')
 licensify = require('licensify')
 webserver = require('gulp-webserver')
 aliasify = require('aliasify')
+gzip =  require('gulp-gzip')
 
 destinations =
   bundle_js: './examples/js'
@@ -51,9 +52,26 @@ gulp.task 'js:app', ->
       bundle
         .pipe(gulp.dest(destinations.bundle_js))
 
+gulp.task 'js-gzip:app', ['js:app'], ->
+  gulp.src("#{destinations.bundle_js}/bundle.js")
+    .pipe(gzip())
+    .pipe(gulp.dest(destinations.bundle_js))
+
 gulp.task 'build', [
-  'js:app'
+  'js-gzip:app'
 ]
+
+gulp.task 'clean', ->
+  del [
+    "#{bundle_js}/bundle.js",
+    "#{bundle_js}/bundle.js.gz"
+  ], (err, deletedFiles) ->
+    if deletedFiles.length
+      util.log 'Deleted', util.colors.red(deletedFiles.join(' ,'))
+    else
+      util.log util.colors.yellow('empty - nothing to delete')
+    return
+  return
 
 gulp.task 'server', ['build'], ->
   gulp.src('./')
