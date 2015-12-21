@@ -1,5 +1,5 @@
 // no-op stub of the npm package 'progress'
-exports = function () {
+module.exports = function () {
 	return {
 		tick: function () {}
 	};

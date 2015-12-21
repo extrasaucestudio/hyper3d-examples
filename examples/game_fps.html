@@ -15,8 +15,14 @@
 		<script src="js/framework.js"></script>
 
 		<script>
-			var intersects = require('threejs-geometry-hittest').intersects;
 			runExample(function (fw) {
+				"use strict";
+
+				var intersects = require('threejs-geometry-hittest').intersects;
+				var patrol = require('patroljs');
+				var THREE = fw.THREE;
+				var Hyper = fw.Hyper;
+
 				var renderer = fw.renderer;
 				var camera = fw.autoCameraAspect(new THREE.PerspectiveCamera(70, 1, 0.1, 50));
 				camera.up.set(0, 0, 1);
@@ -28,15 +34,40 @@
 				var t1 = new THREE.Vector3();
 				var t2 = new THREE.Vector3();
 
+				var players = [];
+				var agents = [];
+
+				function distanceToLineSegment(a, b, p)
+				{
+					var d = b.clone();
+					d.sub(a);
+
+					var aq = a.dot(d);
+					var bq = b.dot(d);
+					var pq = p.dot(d);
+					if (pq < aq) {
+						return p.distanceTo(a);
+					}
+					if (pq > bq) {
+						return p.distanceTo(b);
+					}
+
+					var d1 = a.clone(), d2 = b.clone();
+					d1.sub(p), d2.sub(p);
+					d.crossVectors(d1, d2);
+
+					return Math.sqrt(d.lengthSq() / (bq - aq));
+				}
+
 				function Player()
 				{
-					this.pos = new THREE.Vector3(9.41, 0, -14.8263);
+					this.pos = new THREE.Vector3(9.41, 0, -19.8263);
 					this.vel = new THREE.Vector3(0, 0, 0);
 					this.yaw = 0;
 					this.pitch = 0;
 					this.height = 1.7;
 					this.eyeHeight = 1.6;
-					this.radius = 0.4;
+					this.radius = 0.3;
 					this.control = new THREE.Vector2(0, 0);
 					this.jump = false;
 				}
@@ -162,6 +193,172 @@
 					}
 				};
 
+				function ManualAgent(player)
+				{
+					this.player = player;
+
+	                fw.on('lockedmousemove', function (e) {
+	                	var yaw = player.yaw, pitch = player.pitch;
+	                    yaw += e.dx * 0.004;
+	                    pitch += e.dy * 0.004;
+	                    pitch = Math.max(Math.min(pitch, Math.PI * 0.49), Math.PI * -0.49);
+	                    player.yaw = yaw; player.pitch = pitch;
+	                });
+				}
+				ManualAgent.prototype = {
+					update: function (deltaTime)
+					{
+						var human = this.player;
+
+						var ctrl = human.control;
+						ctrl.x = ctrl.y = 0;
+	                    if (fw.isKeyPressed('w')) ctrl.y = 1;
+	                    if (fw.isKeyPressed('s')) ctrl.y = -1;
+	                    if (fw.isKeyPressed('a')) ctrl.x = -1;
+	                    if (fw.isKeyPressed('d')) ctrl.x = 1;
+	                    human.jump = fw.isKeyPressed(' ');
+					}
+				}
+
+				function AutomaticAgent(player, zone)
+				{
+					this.player = player;
+					this.zone = zone;
+					this.thinkTime = 0;
+					this.targetPos = null;
+					this.path = null;
+				}
+				AutomaticAgent.prototype = {
+					update: function (deltaTime)
+					{
+						this.thinkTime -= deltaTime;
+						if (this.thinkTime <= 0) {
+							this.thinkTime = Math.max(0, this.thinkTime + 0.1 + Math.random() * 0.1);
+							this.think();
+						}
+					},
+					think: function ()
+					{
+						var player = this.player;
+
+						if (this.targetPos == null ||
+							player.pos.distanceTo(this.targetPos) < 1) {
+							if (this.targetPos == null) {
+								this.log("Need to decide the next target position.");
+							} else {
+								this.log("Reached the target position. What's next?");
+							}
+
+							// decide next target pos
+							var group = patrol.getGroup(this.zone, player.pos);
+
+							// randomize position
+							var pos = patrol.getRandomNode(this.zone, group);
+							this.targetPos = pos.clone();
+
+							this.log("Proceeding to ", pos, ".");
+
+							this.path = null;
+						}
+
+						var path = this.path;
+						var pos = player.pos;
+
+						// find nearest line
+						var best = Infinity, bestIndex = 0;
+						if (path) {
+							for (var i = 0; i < path.length - 1; ++i) {
+								var dist = distanceToLineSegment(path[i], path[i + 1], pos);
+								if (dist < best) {
+									best = dist; bestIndex = i;
+								}
+							}
+						}
+
+						if (best > 2) {
+							if (path) {
+								this.log(best, "meters away from the current path. Need to recompute the path.");
+							} else {
+								this.log("Need to recompute the path.");
+							}
+							this.path = patrol.findPath(player.pos, this.targetPos,
+								this.zone, group);
+							if (this.path == null) {
+								this.log("Could not find the route.");
+								this.targetPos = null;
+							} else {
+								this.log("Path generated. It contains ", this.path.length, 
+									" waypoints.");
+								this.path.unshift(player.pos.clone());
+							}
+							return;
+						}
+
+						// project current pos to the path
+						var t1 = new THREE.Vector3();
+						var t2 = new THREE.Vector3();
+						var t3 = new THREE.Vector3();
+						var path1 = path[bestIndex];
+						var path2 = path[bestIndex + 1];
+						t1.subVectors(path2, path1);
+						t1.normalize();
+						t2.subVectors(pos, path1);
+						var q = t2.dot(t1);
+						t3.copy(path1);
+						t3.addScaledVector(t1, Math.max(Math.min(q, path1.distanceTo(path2)), 0));
+
+						// compute current target pos
+						t3.addScaledVector(t1, 0.5);
+
+						// compute control
+						var front = player.getFrontNoPitch();
+						var side = player.getSide();
+						t3.sub(pos);
+
+						var ctrl = player.control;
+						ctrl.x = t3.dot(side);
+						ctrl.y = t3.dot(front);
+						ctrl.normalize();
+					},
+					log: function (msg)
+					{
+						// console.log.apply(console, arguments);
+					}
+				};
+
+				function FirstPersonCameraPlayerObject(player, camera)
+				{
+					this.player = player;
+					this.camera = camera;
+				}
+				FirstPersonCameraPlayerObject.prototype = {
+					update: function (deltaTime)
+					{
+	                    this.player.moveCamera(camera);
+					}
+				};
+
+				var bg = new THREE.BoxGeometry(0.5, 1.7, 0.5);
+				function NormalPlayerObject(player, scene)
+				{
+					this.player = player;
+					this.scene = scene;
+
+					this.mesh = new THREE.Mesh(bg, new THREE.MeshPhongMaterial({
+						color: 0x7f3f3f,
+						shininess: 1000
+					}));
+					this.mesh.castShadow = true;
+					scene.add(this.mesh);
+				}
+				NormalPlayerObject.prototype = {
+					update: function (deltaTime)
+					{
+						this.mesh.position.copy(this.player.pos);
+						this.mesh.position.y += 1.7 / 2;
+					}
+				};
+
 
 				var scene = new THREE.Scene();
 
@@ -186,7 +383,7 @@
 					color: 0x9fcfff
 				});
 
-				mesh = new THREE.Mesh(skygeo, skyMaterial);
+				var mesh = new THREE.Mesh(skygeo, skyMaterial);
 				camera.add( mesh );
 
 				var sungeo = new THREE.SphereGeometry(0.7, 16, 16);
@@ -232,30 +429,62 @@
 
 				// generate players
 				var human = new Player();
+				players.push(human);
+				agents.push(new ManualAgent(human));
 
-                fw.on('lockedmousemove', function (e) {
-                	var yaw = human.yaw, pitch = human.pitch;
-                    yaw += e.dx * 0.004;
-                    pitch += e.dy * 0.004;
-                    pitch = Math.max(Math.min(pitch, Math.PI * 0.49), Math.PI * -0.49);
-                    human.yaw = yaw; human.pitch = pitch;
-                });
+				// generate player objects
+				var playerObjects = [];
+				playerObjects.push(new FirstPersonCameraPlayerObject(human, camera));
+
+				// load navmesh
+				jsonLoader.load('models/level-nav.json', function (geo, mats) {
+					var ZoneName = 'level';
+					patrol.setZoneData(ZoneName, patrol.buildNodes(geo));
+
+					for (var i = 0; i < 8; ++i) {
+						var player = new Player();
+						players.push(player);
+						agents.push(new AutomaticAgent(player, ZoneName));
+						playerObjects.push(new NormalPlayerObject(player, scene));
+					}
+
+					// find the main meshgroup
+					var mg = patrol.getGroup(ZoneName, human.pos);
+
+					// randomize position
+					players.forEach(function (player) {
+						var pos = patrol.getRandomNode(ZoneName, mg);
+						player.pos.copy(pos);
+					});
+
+				});
+
+				function updatePhysics(deltaTime)
+				{
+                    players.forEach(function (player) {
+                    	player.update(deltaTime);
+                    });
+				}
 
 				fw.on('animate', function (e) {
 					// update players after map is loaded
 					if (playerClipGeometry) {
-						var ctrl = human.control;
-						ctrl.x = ctrl.y = 0;
-	                    if (fw.isKeyPressed('w')) ctrl.y = 1;
-	                    if (fw.isKeyPressed('s')) ctrl.y = -1;
-	                    if (fw.isKeyPressed('a')) ctrl.x = -1;
-	                    if (fw.isKeyPressed('d')) ctrl.x = 1;
-	                    human.jump = fw.isKeyPressed(' ');
 
-	                    human.update(e.deltaTime);
+						agents.forEach(function (agent) {
+							agent.update(e.deltaTime)
+						});
+
+						var step = 1 / 30;
+						for (var t = 0; t < e.deltaTime; t += step) {
+							var dt = Math.min(e.deltaTime - t, step);
+							updatePhysics(dt);
+						}
+
+	                    playerObjects.forEach(function (playerObject) {
+	                    	playerObject.update(e.deltaTime);
+	                    });
 					}
 
-					human.moveCamera(camera);
 					sun.position.copy(camera.position);
 					sun.position.addScaledVector(sunLight.position, 5)
 
