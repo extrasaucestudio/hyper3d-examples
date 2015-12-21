@@ -362,6 +362,12 @@
 
 				var scene = new THREE.Scene();
 
+				var dust = THREE.ImageUtils.loadTexture( 'textures/dust.jpg' );
+				renderer.parameters.bloomTexture = dust;
+				renderer.parameters.bloomAmount = 32;
+				renderer.parameters.contrast = 0.8;
+				renderer.parameters.exposureBias = 1;
+				renderer.parameters.highlightCrush = 0.6;
 
 				var texture = THREE.ImageUtils.loadTexture( 'textures/crate.jpg' );
 				var textureSp = THREE.ImageUtils.loadTexture( 'textures/crate-specular.jpg' );
@@ -412,7 +418,7 @@
 					playerClipObject = levelMesh;
 				});
 
-				var sunLight = new THREE.DirectionalLight(0xffefdf, 2);
+				var sunLight = new THREE.DirectionalLight(0xffefdf, 4);
 				sunLight.position.set(2, 2, -1);
 				sunLight.castShadow = true;
 				scene.add(sunLight);
