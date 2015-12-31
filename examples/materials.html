@@ -128,7 +128,7 @@
 
 					for (var i = 0; i < 5; ++i) {
 						matInst = new Hyper.MaterialInstance(mat, {
-							albedo: [0.05, 0.1, 0.580],
+							albedo: [0.2, 0.02, 0.03],
 							roughness: (i + 1) / 4,
 							metallic: 1
 						});
@@ -142,7 +142,7 @@
 				}
 
 				// load mesh
-				if (false) {
+				if (true) {
 					var jsonLoader = new THREE.JSONLoader();
 					jsonLoader.load('models/suzanne.json', function (geo, mats) {
 						makeMeshes(geo);
