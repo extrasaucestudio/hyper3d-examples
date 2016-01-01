@@ -15,7 +15,9 @@ Feature Showcase
 
 * **[materials](materials)**: Demonstrates Hyper3D's PBR material system
 
+<!--
 Example Apps
 ------------
 
 * **[game/fps](game_fps)**: Basic first-person shooter. Uses [PatrolJS](https://github.com/nickjanssen/PatrolJS) for AI navigation
+-->
