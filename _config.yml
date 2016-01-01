@@ -1,7 +1,5 @@
 # visit https://github.com/mojombo/jekyll/wiki/Configuration for more settings
 
-paginate: 10 # pagination based on number of posts
-paginate_path: "page:num"
 exclude: 
   - node_modules
   - src
@@ -31,6 +29,7 @@ author:
   bio: High-end rendering engine for three.js
 
 role: examples
+baseurl: /hyper3d-examples
 
 google_analytics: UA-22347556-10
 

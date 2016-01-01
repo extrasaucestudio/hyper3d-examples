@@ -25,5 +25,5 @@ npm install
 # Run server
 npm run-script server
 
-# Now open http://127.0.0.1:4000/ in your favorite web browser
+# Now open http://127.0.0.1:4000/hyper3d-examples/ in your favorite web browser
 ```
