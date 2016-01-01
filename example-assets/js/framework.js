@@ -319,7 +319,37 @@ var runExample = function (options, cb) {
                 this.on('resize', update);
                 return camera;
             }
-        }; 
+        };
+
+        var infoLabel = $('<div class="info">');
+
+        function updateInfoText()
+        {
+            var parts = [];
+            var gl = renderer.context || (renderer.core && renderer.core.gl);
+            if (gl) {
+                parts.push(gl.getParameter(gl.VERSION), "\n");
+
+                var ext = gl.getExtension("WEBGL_debug_renderer_info");
+                if (ext) {
+                    parts.push(gl.getParameter(ext.UNMASKED_VENDOR_WEBGL), ", ");
+                    parts.push(gl.getParameter(ext.UNMASKED_RENDERER_WEBGL), "\n");
+                } else {
+                    parts.push(gl.getParameter(gl.VENDOR), "\n");
+                }
+                parts.push(gl.drawingBufferWidth, "x", gl.drawingBufferHeight);
+            } else {
+                parts.push(framework.width, "x", framework.height, " (CSS)");
+            }
+
+            // Hyper3D introspection (private API)
+            var core = renderer.core;
+            if (core) {
+                parts.push(", ", ["Full HDR", "Mobile HDR"][core.hdrMode]);
+            }
+
+            infoLabel.text(parts.join(''));
+        }
 
         function resizeRenderer()
         {
@@ -331,13 +361,18 @@ var runExample = function (options, cb) {
                     framework.width * pixelRatio & ~1, 
                     framework.height * pixelRatio & ~1 );
 
+                updateInfoText();
+
                 framework.invoke('resize');
             });
         }
 
         renderer.domElement.className = "main";
-        $('#example-wrapper').append( renderer.domElement );
-        $('body').append( stats.domElement );
+        $('#example-wrapper')
+            .append(renderer.domElement)
+            .append(infoLabel);
+
+        $('body').append(stats.domElement);
 
         resizeRenderer();
         $(window).resize(resizeRenderer);
