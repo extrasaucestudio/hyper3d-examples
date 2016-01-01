@@ -10,7 +10,7 @@ WebGL-enabled web browser ([Google Chrome](https://www.google.com/chrome/) is re
 
 You can browse the source code at the [GitHub source code page](https://github.com/Hyper3D/hyper3d-examples/tree/master/_examples). See [Get Started](/start) to start using Hyper3D.
 
-**Hyper3D is still at a very ealy stage of development.** You might observe an unexpected behavior including distorted image, browser crash, peformance breakdown, and shader compilation failure.
+**Hyper3D is still at a very early stage of development.** You might observe an unexpected behavior including distorted image, browser crash, peformance breakdown, and shader compilation failure.
 
 Basics
 ------
