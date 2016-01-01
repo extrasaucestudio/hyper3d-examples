@@ -1,4 +1,5 @@
 ---
+permalink: /
 layout: page
 title: Examples
 ---

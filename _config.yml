@@ -7,7 +7,7 @@ exclude:
   - gulpfile.coffee
   - build-gh-pages.sh
   - README.md
-include: ["assets/*"]
+include: ["assets/*", "_examples"]
 
 markdown: redcarpet
 highlighter: pygments
