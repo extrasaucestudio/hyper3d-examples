@@ -339,6 +339,9 @@ var runExample = function (options, cb) {
                 } else {
                     parts.push(gl.getParameter(gl.VENDOR), "\n");
                 }
+                if (renderer.rendererInfo) {
+                    parts.push(renderer.rendererInfo, " @ ");
+                }
                 parts.push(gl.drawingBufferWidth, "x", gl.drawingBufferHeight);
             } else {
                 parts.push(framework.width, "x", framework.height, " (CSS)");
