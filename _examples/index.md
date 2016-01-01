@@ -6,7 +6,7 @@ title: Examples
 
 These examples demonstrate the features that Hyper3D provides, and show how to use them.
 
-Note that WebGL-enabled web browser ([Google Chrome](https://www.google.com/chrome/) is recommended) is required to see these examples. Furthermore, a high-end video card might be required for them to run at an acceptable frame rate, though they can run on a wide range of video cards.
+WebGL-enabled web browser ([Google Chrome](https://www.google.com/chrome/) is recommended) is required to see these examples. Furthermore, a high-end video card might be required for them to run at an acceptable frame rate, though they can run on a wide range of video cards.
 
 You can browse the source code at the [GitHub source code page](https://github.com/Hyper3D/hyper3d-examples/tree/master/_examples). See [Get Started](/start) to start using Hyper3D.
 
