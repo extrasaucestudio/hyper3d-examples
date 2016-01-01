@@ -18,7 +18,7 @@ echo "-- Building."
 npm run-script build || on_error
 
 echo "-- Adding built files."
-git add -f examples/js/bundle.js || on_error
+git add -f example-assets/js/bundle.js || on_error
 
 echo "-- Commiting."
 git commit -m "Automated build by build-gh-pages.sh"

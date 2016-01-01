@@ -14,9 +14,10 @@ licensify = require('licensify')
 webserver = require('gulp-webserver')
 aliasify = require('aliasify')
 gzip =  require('gulp-gzip')
+shell = require('gulp-shell')
 
 destinations =
-  bundle_js: './examples/js'
+  bundle_js: './example-assets/js'
 
 gulp.task 'js:app', ->
   unless util.env.mode in ['release', 'debug']
@@ -73,13 +74,8 @@ gulp.task 'clean', ->
     return
   return
 
-gulp.task 'server', ['build'], ->
-  gulp.src('./')
-    .pipe(webserver(
-      fallback: 'index.html',
-      directoryListing: true,
-      host: '0.0.0.0'
-    ))
+gulp.task 'server', ['build'],
+  shell.task(["jekyll s"])
 
 gulp.task 'default', [
   'build', 'server'

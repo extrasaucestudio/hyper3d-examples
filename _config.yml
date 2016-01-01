@@ -1,0 +1,37 @@
+# visit https://github.com/mojombo/jekyll/wiki/Configuration for more settings
+
+paginate: 10 # pagination based on number of posts
+paginate_path: "page:num"
+exclude: 
+  - node_modules
+  - src
+  - package.json
+  - gulpfile.coffee
+  - build-gh-pages.sh
+  - README.md
+include: ["assets/*"]
+
+markdown: redcarpet
+highlighter: pygments
+redcarpet:
+    extensions: ["no_intra_emphasis", "tables", "autolink", "strikethrough", "with_toc_data"]
+
+defaults:
+  -
+    scope:
+      path: "" # empty string for all files
+    values:
+      title: Hyper3D
+
+title: Hyper3D
+description: High-end rendering engine for three.js
+author:
+  name: Hyper3D Developers
+  github: Hyper3D
+  bio: High-end rendering engine for three.js
+
+role: examples
+
+google_analytics: UA-22347556-10
+
+BASE_PATH:

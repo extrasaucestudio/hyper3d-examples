@@ -55,7 +55,7 @@ var calledChecked = function (fn) {
 function showHyper3DLogo()
 {
     $('<img class="logo-hyper3d">')
-    .attr('src', 'img/logo.svg')
+    .attr('src', 'example-assets/img/logo.svg')
     .appendTo('body');
 }
 
@@ -324,8 +324,8 @@ var runExample = function (options, cb) {
         function resizeRenderer()
         {
             callChecked(function () {
-                framework.width = $(window).width();
-                framework.height = $(window).height();
+                framework.width = $(renderer.domElement).width();
+                framework.height = $(renderer.domElement).height();
 
                 renderer.setSize( 
                     framework.width * pixelRatio & ~1, 
@@ -335,12 +335,12 @@ var runExample = function (options, cb) {
             });
         }
 
+        renderer.domElement.className = "main";
+        $('#example-wrapper').append( renderer.domElement );
+        $('body').append( stats.domElement );
+
         resizeRenderer();
         $(window).resize(resizeRenderer);
-
-        renderer.domElement.className = "main";
-        document.body.appendChild( renderer.domElement );
-        document.body.appendChild( stats.domElement );
 
         // start application code
         cb(framework);

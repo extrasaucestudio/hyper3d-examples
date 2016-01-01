@@ -1,8 +1,11 @@
 node_modules
 .DS_Store
-examples/js/bundle.js
-examples/js/bundle.js.gz
+example-assets/js/bundle.js
+example-assets/js/bundle.js.gz
 bundle-raw.js
-assets
+_assets
 npm-debug.log
+_site
+.sass-cache
+.jekyll-metadata
 

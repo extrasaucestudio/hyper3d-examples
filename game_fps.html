@@ -1,0 +1,487 @@
+---
+title: game/fps
+layout: example
+---
+<script>
+	runExample(function (fw) {
+		"use strict";
+
+		var intersects = require('threejs-geometry-hittest').intersects;
+		var patrol = require('patroljs');
+		var THREE = fw.THREE;
+		var Hyper = fw.Hyper;
+
+		var renderer = fw.renderer;
+		var camera = fw.autoCameraAspect(new THREE.PerspectiveCamera(70, 1, 0.1, 50));
+		camera.up.set(0, 0, 1);
+
+		// Geometry which clips the movement of players
+		var playerClipGeometry;
+		var playerClipObject;
+
+		var t1 = new THREE.Vector3();
+		var t2 = new THREE.Vector3();
+
+		var players = [];
+		var agents = [];
+
+		function distanceToLineSegment(a, b, p)
+		{
+			var d = b.clone();
+			d.sub(a);
+
+			var aq = a.dot(d);
+			var bq = b.dot(d);
+			var pq = p.dot(d);
+			if (pq < aq) {
+				return p.distanceTo(a);
+			}
+			if (pq > bq) {
+				return p.distanceTo(b);
+			}
+
+			var d1 = a.clone(), d2 = b.clone();
+			d1.sub(p), d2.sub(p);
+			d.crossVectors(d1, d2);
+
+			return Math.sqrt(d.lengthSq() / (bq - aq));
+		}
+
+		function Player()
+		{
+			this.pos = new THREE.Vector3(9.41, 0, -19.8263);
+			this.vel = new THREE.Vector3(0, 0, 0);
+			this.yaw = 0;
+			this.pitch = 0;
+			this.height = 1.7;
+			this.eyeHeight = 1.6;
+			this.radius = 0.3;
+			this.control = new THREE.Vector2(0, 0);
+			this.jump = false;
+		}
+		Player.prototype = {
+			getFront: function ()
+			{
+				var yaw = this.yaw, pitch = this.pitch;
+				return new THREE.Vector3(
+					Math.sin(yaw) * Math.cos(pitch),
+					-Math.sin(pitch),
+					-Math.cos(yaw) * Math.cos(pitch));
+			},
+			getSide: function ()
+			{
+				var yaw = this.yaw;
+				return new THREE.Vector3(
+					Math.cos(yaw),
+					0,
+					Math.sin(yaw));
+			},
+			getFrontNoPitch: function ()
+			{
+				var yaw = this.yaw;
+				return new THREE.Vector3(
+					Math.sin(yaw),
+					0,
+					-Math.cos(yaw));
+			},
+			getBox: function ()
+			{
+				var pos = this.pos;
+				var min = new THREE.Vector3(
+					pos.x - this.radius,
+					pos.y,
+					pos.z - this.radius
+				);
+				var max = new THREE.Vector3(
+					pos.x + this.radius,
+					pos.y + this.eyeHeight,
+					pos.z + this.radius
+				);
+				return new THREE.Box3(min, max);
+			},
+			update: function (deltaTime)
+			{
+				this.pos.addScaledVector(this.vel, deltaTime);
+
+				// friction
+				this.vel.x *= Math.pow(0.0001, deltaTime);
+				this.vel.z *= Math.pow(0.0001, deltaTime);
+
+				// gravity
+				this.vel.y -= 20 * deltaTime;
+
+				this.vel.addScaledVector(this.getFrontNoPitch(), this.control.y * 40 * deltaTime);
+				this.vel.addScaledVector(this.getSide(), this.control.x * 40 * deltaTime);
+
+				// floor
+				var caster = new THREE.Raycaster();
+				caster.near = 0; caster.far = this.radius;
+				caster.set(new THREE.Vector3(
+					this.pos.x, this.pos.y + this.radius, this.pos.z),
+					new THREE.Vector3(0, -1, 0));
+				var ins = caster.intersectObjects([playerClipObject]);
+				var minDistance = Infinity;
+				for (var i = 0; i < ins.length; ++i) {
+					minDistance = Math.min(minDistance, ins[i].distance);
+				}
+				if (minDistance >= 0 && minDistance <= this.radius + 0.001) {
+					this.pos.y += this.radius - minDistance;
+					this.vel.y = Math.max(this.vel.y, 0);
+					if (this.jump) {
+						this.vel.y = 10;
+					}
+				}
+
+				// wall
+				function clip(sph)
+				{
+					var geo = playerClipGeometry;
+					var results = intersects(geo, sph);
+					var center = sph.center;
+					for (var i = 0; i < results.length; ++i) {
+						var r = results[i];
+						var face = geo.faces[r.faceIndex];
+
+						// get away from the wall
+						var d = r.pos.sub(center).normalize();
+						this.pos.addScaledVector(d, -r.depth);
+
+						// stop movement toward the wall
+						var k = this.vel.dot(d);
+						if (k > 0) {
+							this.vel.addScaledVector(d, -k);
+						}
+					}
+					return results.length;
+				}
+
+				for (var i = 0; i < 3; ++i) {
+					var hit = false;
+
+					var p = this.pos.clone();
+					p.y += this.radius * 1.8;
+					if (clip.call(this, new THREE.Sphere(p, this.radius))) hit = true;
+					p.copy(this.pos);
+					p.y += this.height * .5;
+					if (clip.call(this, new THREE.Sphere(p, this.radius))) hit = true;
+					p.copy(this.pos);
+					p.y += this.height - this.radius;
+					if (clip.call(this, new THREE.Sphere(p, this.radius))) hit = true;
+
+					if (!hit)
+						break;
+				}
+			},
+			moveCamera: function (camera)
+			{
+				var pos = this.pos;
+				camera.position.set(pos.x, pos.y + this.eyeHeight, pos.z);
+       			camera.quaternion.setFromEuler(new THREE.Euler(
+       				-this.pitch, -this.yaw, 0, 'YXZ'));
+			}
+		};
+
+		function ManualAgent(player)
+		{
+			this.player = player;
+
+            fw.on('lockedmousemove', function (e) {
+            	var yaw = player.yaw, pitch = player.pitch;
+                yaw += e.dx * 0.004;
+                pitch += e.dy * 0.004;
+                pitch = Math.max(Math.min(pitch, Math.PI * 0.49), Math.PI * -0.49);
+                player.yaw = yaw; player.pitch = pitch;
+            });
+		}
+		ManualAgent.prototype = {
+			update: function (deltaTime)
+			{
+				var human = this.player;
+
+				var ctrl = human.control;
+				ctrl.x = ctrl.y = 0;
+                if (fw.isKeyPressed('w')) ctrl.y = 1;
+                if (fw.isKeyPressed('s')) ctrl.y = -1;
+                if (fw.isKeyPressed('a')) ctrl.x = -1;
+                if (fw.isKeyPressed('d')) ctrl.x = 1;
+                human.jump = fw.isKeyPressed(' ');
+			}
+		}
+
+		function AutomaticAgent(player, zone)
+		{
+			this.player = player;
+			this.zone = zone;
+			this.thinkTime = 0;
+			this.targetPos = null;
+			this.path = null;
+		}
+		AutomaticAgent.prototype = {
+			update: function (deltaTime)
+			{
+				this.thinkTime -= deltaTime;
+				if (this.thinkTime <= 0) {
+					this.thinkTime = Math.max(0, this.thinkTime + 0.1 + Math.random() * 0.1);
+					this.think();
+				}
+			},
+			think: function ()
+			{
+				var player = this.player;
+
+				if (this.targetPos == null ||
+					player.pos.distanceTo(this.targetPos) < 1) {
+					if (this.targetPos == null) {
+						this.log("Need to decide the next target position.");
+					} else {
+						this.log("Reached the target position. What's next?");
+					}
+
+					// decide next target pos
+					var group = patrol.getGroup(this.zone, player.pos);
+
+					// randomize position
+					var pos = patrol.getRandomNode(this.zone, group);
+					this.targetPos = pos.clone();
+
+					this.log("Proceeding to ", pos, ".");
+
+					this.path = null;
+				}
+
+				var path = this.path;
+				var pos = player.pos;
+
+				// find nearest line
+				var best = Infinity, bestIndex = 0;
+				if (path) {
+					for (var i = 0; i < path.length - 1; ++i) {
+						var dist = distanceToLineSegment(path[i], path[i + 1], pos);
+						if (dist < best) {
+							best = dist; bestIndex = i;
+						}
+					}
+				}
+
+				if (best > 2) {
+					if (path) {
+						this.log(best, "meters away from the current path. Need to recompute the path.");
+					} else {
+						this.log("Need to recompute the path.");
+					}
+					this.path = patrol.findPath(player.pos, this.targetPos,
+						this.zone, group);
+					if (this.path == null) {
+						this.log("Could not find the route.");
+						this.targetPos = null;
+					} else {
+						this.log("Path generated. It contains ", this.path.length, 
+							" waypoints.");
+						this.path.unshift(player.pos.clone());
+					}
+					return;
+				}
+
+				// project current pos to the path
+				var t1 = new THREE.Vector3();
+				var t2 = new THREE.Vector3();
+				var t3 = new THREE.Vector3();
+				var path1 = path[bestIndex];
+				var path2 = path[bestIndex + 1];
+				t1.subVectors(path2, path1);
+				t1.normalize();
+				t2.subVectors(pos, path1);
+				var q = t2.dot(t1);
+				t3.copy(path1);
+				t3.addScaledVector(t1, Math.max(Math.min(q, path1.distanceTo(path2)), 0));
+
+				// compute current target pos
+				t3.addScaledVector(t1, 0.5);
+
+				// compute control
+				var front = player.getFrontNoPitch();
+				var side = player.getSide();
+				t3.sub(pos);
+
+				var ctrl = player.control;
+				ctrl.x = t3.dot(side);
+				ctrl.y = t3.dot(front);
+				ctrl.normalize();
+			},
+			log: function (msg)
+			{
+				// console.log.apply(console, arguments);
+			}
+		};
+
+		function FirstPersonCameraPlayerObject(player, camera)
+		{
+			this.player = player;
+			this.camera = camera;
+		}
+		FirstPersonCameraPlayerObject.prototype = {
+			update: function (deltaTime)
+			{
+                this.player.moveCamera(camera);
+			}
+		};
+
+		var bg = new THREE.BoxGeometry(0.5, 1.7, 0.5);
+		function NormalPlayerObject(player, scene)
+		{
+			this.player = player;
+			this.scene = scene;
+
+			this.mesh = new THREE.Mesh(bg, new THREE.MeshPhongMaterial({
+				color: 0x7f3f3f,
+				shininess: 1000
+			}));
+			this.mesh.castShadow = true;
+			scene.add(this.mesh);
+		}
+		NormalPlayerObject.prototype = {
+			update: function (deltaTime)
+			{
+				this.mesh.position.copy(this.player.pos);
+				this.mesh.position.y += 1.7 / 2;
+			}
+		};
+
+
+		var scene = new THREE.Scene();
+
+		var dust = THREE.ImageUtils.loadTexture( 'example-assets/textures/dust.jpg' );
+		renderer.parameters.bloomTexture = dust;
+		renderer.parameters.bloomAmount = 32;
+		renderer.parameters.contrast = 0.8;
+		renderer.parameters.exposureBias = 1;
+		renderer.parameters.highlightCrush = 0.6;
+
+		var skygeo = new THREE.BoxGeometry( 70, 70, 70 );
+		for (var i = 0; i < skygeo.faces.length; ++i) {
+			var face = skygeo.faces[i];
+			var k = face.a;
+			for (var j = 0; j < 3; ++j) {
+				face.vertexNormals[j].negate();
+			}
+			face.a = face.b; face.b = k;
+		}
+		for (var i = 0; i < skygeo.vertices.length; ++i) {
+			var v = skygeo.vertices[i];
+		}
+		
+		var skyMaterial = new THREE.MeshBasicMaterial({
+			color: 0x9fcfff
+		});
+
+		var mesh = new THREE.Mesh(skygeo, skyMaterial);
+		camera.add( mesh );
+
+		var sungeo = new THREE.SphereGeometry(0.7, 16, 16);
+		var suncolor = new THREE.Color();
+		suncolor.r = 20; suncolor.g = 17; suncolor.b = 14;
+		var sun = new THREE.Mesh(sungeo, new THREE.MeshBasicMaterial({color: suncolor}));
+		scene.add(sun);
+
+		var levelMesh;
+
+		var jsonLoader = new THREE.JSONLoader();
+		jsonLoader.load('example-assets/models/level.json', function (geo, mats) {
+
+			var material = new THREE.MeshPhongMaterial({
+				//map: texture,
+				//specularMap: textureSp,
+				color: 0x3f3f3f,
+				shininess: 100
+			});
+
+			levelMesh = new THREE.Mesh(geo, material);
+			levelMesh.castShadow = true;
+			scene.add(levelMesh);
+
+			playerClipGeometry = geo;
+			playerClipObject = levelMesh;
+		});
+
+		var sunLight = new THREE.DirectionalLight(0xffefdf, 4);
+		sunLight.position.set(2, 2, -1);
+		sunLight.castShadow = true;
+		scene.add(sunLight);
+
+		var flashlight = new THREE.PointLight(0xffaf6f, 10, 10);
+		flashlight.position.set(0, 0.1, -0.5);
+		flashlight.castShadow = true;
+		//camera.add(flashlight);
+
+		var ambLight = new THREE.AmbientLight(0x9fcfff);
+		scene.add(ambLight);
+
+		scene.add(camera);
+
+		// generate players
+		var human = new Player();
+		players.push(human);
+		agents.push(new ManualAgent(human));
+
+		// generate player objects
+		var playerObjects = [];
+		playerObjects.push(new FirstPersonCameraPlayerObject(human, camera));
+
+		// load navmesh
+		jsonLoader.load('example-assets/models/level-nav.json', function (geo, mats) {
+			var ZoneName = 'level';
+			patrol.setZoneData(ZoneName, patrol.buildNodes(geo));
+
+			for (var i = 0; i < 8; ++i) {
+				var player = new Player();
+				players.push(player);
+				agents.push(new AutomaticAgent(player, ZoneName));
+				playerObjects.push(new NormalPlayerObject(player, scene));
+			}
+
+			// find the main meshgroup
+			var mg = patrol.getGroup(ZoneName, human.pos);
+
+			// randomize position
+			players.forEach(function (player) {
+				var pos = patrol.getRandomNode(ZoneName, mg);
+				player.pos.copy(pos);
+			});
+
+		});
+
+		function updatePhysics(deltaTime)
+		{
+            players.forEach(function (player) {
+            	player.update(deltaTime);
+            });
+		}
+
+		fw.on('animate', function (e) {
+			// update players after map is loaded
+			if (playerClipGeometry) {
+
+				agents.forEach(function (agent) {
+					agent.update(e.deltaTime)
+				});
+
+				var step = 1 / 30;
+				for (var t = 0; t < e.deltaTime; t += step) {
+					var dt = Math.min(e.deltaTime - t, step);
+					updatePhysics(dt);
+				}
+
+                playerObjects.forEach(function (playerObject) {
+                	playerObject.update(e.deltaTime);
+                });
+			}
+
+			sun.position.copy(camera.position);
+			sun.position.addScaledVector(sunLight.position, 5)
+
+			renderer.render( scene, camera );
+		});
+
+	});
+
+</script>
