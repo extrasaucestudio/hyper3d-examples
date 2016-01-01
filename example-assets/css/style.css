@@ -19,7 +19,8 @@ footer hr {
 		padding-left: 0;
 		position: fixed;
 		left: 0; right: 0;
-		top: 55px; bottom:;
+		top: 55px; bottom: 0;
+		height: auto;
 	}
 	footer {
 		position: fixed;
