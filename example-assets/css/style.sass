@@ -7,11 +7,10 @@ body
     overflow: hidden
 
 #stats
-    position: fixed
+    position: absolute
     right: 0
     top: 0
-    @media #{$small}
-        top: 55px !important
+
 #content
     padding-right: 0
     @media #{$small}
@@ -22,6 +21,27 @@ body
         top: 55px
         bottom: 0
         height: auto
+
+    // cannot use "&:fullscreen, &:-webkit-fullscreen, &:-moz-fullscreen" because
+    // when Chrome sees :-moz-fullscreen it rejects entire the rule
+    @mixin fullscreen
+        position: fixed
+        left: 0
+        top: 0
+        right: 0
+        bottom: 0
+        margin: 0
+        padding: 0
+        width: 100%
+        height: 100%
+        footer
+            left: 10px
+    &:fullscreen
+        @include fullscreen
+    &:-webkit-full-screen
+        @include fullscreen
+    &:-moz-full-screen
+        @include fullscreen
 
 #example-wrapper
     position: relative
@@ -42,6 +62,24 @@ body
         font-size: 80%
         white-space: pre
         text-shadow: 0px 0px 12px black
+
+    button.fullscreen
+        position: absolute
+        left: 5px
+        bottom: 30px
+        background: none
+        border: none
+        outline: none
+        text-shadow: 0px 0px 12px black
+        color: rgba(255, 255, 255, 0.5)
+        background: rgba(0, 0, 0, 0.2)
+        font-size: 16px
+        line-height: 16px
+        margin: 0
+        padding: 5px
+        z-index: 2
+        &:hover
+            color: rgba(255, 255, 255, 0.8)
 
 footer
     position: absolute

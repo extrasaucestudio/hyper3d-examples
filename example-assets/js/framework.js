@@ -119,6 +119,8 @@ var runExample = function (options, cb) {
                 throw new Error("Unknown renderer was specified: '" + options.renderer + "'");
         }
 
+        var canvas = renderer.domElement;
+
         var pixelRatio = options.pixelRatio;
 
         var stats = new Stats();
@@ -354,8 +356,8 @@ var runExample = function (options, cb) {
         function resizeRenderer()
         {
             callChecked(function () {
-                framework.width = $(renderer.domElement).width();
-                framework.height = $(renderer.domElement).height();
+                framework.width = $(canvas).width();
+                framework.height = $(canvas).height();
 
                 renderer.setSize( 
                     framework.width * pixelRatio & ~1, 
@@ -367,15 +369,54 @@ var runExample = function (options, cb) {
             });
         }
 
-        renderer.domElement.className = "main";
+        canvas.className = "main";
         $('#example-wrapper')
-            .append(renderer.domElement)
-            .append(infoLabel);
-
-        $('body').append(stats.domElement);
+            .append(canvas)
+            .append(infoLabel)
+            .append(stats.domElement);
 
         resizeRenderer();
         $(window).resize(resizeRenderer);
+
+        var content = $('#content').get(0);
+
+        // full screen button
+        if (content.requestFullscreen ||
+            content.msRequestFullscreen ||
+            content.mozRequestFullscreen ||
+            content.webkitRequestFullscreen) {
+
+            $('<button class="fullscreen">')
+            .html('<span class="fa fa-search-plus" aria-hidden="true"></span>')
+            .appendTo('#example-wrapper')
+            .click(function () {
+                if (!document.fullscreenElement &&
+                    !document.mozFullScreenElement &&
+                    !document.webkitFullscreenElement &&
+                    !document.msFullscreenElement) {
+                    if (content.requestFullscreen) {
+                        content.requestFullscreen();
+                    } else if (content.msRequestFullscreen) {
+                        content.msRequestFullscreen();
+                    } else if (content.mozRequestFullScreen) {
+                        content.mozRequestFullScreen();
+                    } else if (content.webkitRequestFullscreen) {
+                        content.webkitRequestFullscreen(Element.ALLOW_KEYBOARD_INPUT);
+                    }
+                } else {
+                    if (document.exitFullscreen) {
+                        document.exitFullscreen();
+                    } else if (document.msExitFullscreen) {
+                        document.msExitFullscreen();
+                    } else if (document.mozCancelFullScreen) {
+                        document.mozCancelFullScreen();
+                    } else if (document.webkitExitFullscreen) {
+                        document.webkitExitFullscreen();
+                    }
+                }
+            });
+
+        }
 
         // start application code
         cb(framework);
@@ -425,7 +466,7 @@ var runExample = function (options, cb) {
             var currentTouch = null;
             var lastX = 0, lastY = 0, startX = 0, startY = 0;
 
-            $(renderer.domElement).mousecapture({
+            $(canvas).mousecapture({
                 down: function (e, data) {
                     if (e.which !== 1) {
                         return;
@@ -562,7 +603,7 @@ var runExample = function (options, cb) {
             });
 
             // hijack mouse events
-            $(renderer.domElement)
+            $(canvas)
             .off('mousedown').off('mouseup').off('mousemove')
             .on('mouseup', function (e) {
                 if (e.which !== 1) {
