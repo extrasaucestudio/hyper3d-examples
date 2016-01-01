@@ -15,7 +15,7 @@ git clone https://github.com/Hyper3D/hyper3d-examples.git
 cd hyper3d-examples
 
 # Pull submodules
-git submodule foreach 'git pull origin master'
+git submodule init
 git submodule update
 
 # Install Jekyll
