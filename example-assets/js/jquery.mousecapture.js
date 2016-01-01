@@ -86,7 +86,10 @@
                 
                 if (params.move) {
                     moveHandler = function(e) {
-                        if ((e.buttons & buttonMask) != buttonMask) {
+                        // Check whether button is still pressed.
+                        // (not working on Safari, though)
+                        if ((e.buttons & buttonMask) != buttonMask &&
+                            typeof buttonMask !== 'undefined') {
                             upHandler(e);
                             return;
                         }
