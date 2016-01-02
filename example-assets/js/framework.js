@@ -121,6 +121,10 @@ var runExample = function (options, cb) {
 
         var canvas = renderer.domElement;
 
+        // Export variables for easier debugging
+        window.canvas = canvas;
+        window.renderer = renderer;
+
         var pixelRatio = options.pixelRatio;
 
         var stats = new Stats();
